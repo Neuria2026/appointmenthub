@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
+    "start": "node scripts/migrate.js && node src/index.js",
     "build": "npm install",
     "seed": "node database/seeds/001_seed_data.js",
     "migrate": "node scripts/migrate.js",

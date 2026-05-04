@@ -18,11 +18,20 @@ async function migrate() {
 
     const sql = fs.readFileSync(sqlPath, 'utf8');
     await client.query(sql);
-
     console.log('✅ Migration completed successfully');
   } catch (err) {
-    console.error('❌ Migration failed:', err.message);
-    process.exit(1);
+    // 42710 = duplicate_object (type already exists)
+    // 42P07 = duplicate_table
+    // 42723 = duplicate_function
+    const alreadyExists = ['42710', '42P07', '42723'].includes(err.code) ||
+      err.message.includes('already exists');
+
+    if (alreadyExists) {
+      console.log('ℹ️  Schema already exists, skipping migration');
+    } else {
+      console.error('❌ Migration failed:', err.message);
+      process.exit(1);
+    }
   } finally {
     await client.end();
   }
