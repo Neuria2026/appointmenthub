@@ -21,6 +21,9 @@ import reviewRoutes from './routes/reviews.js';
 
 const app = express();
 
+// Trust Railway's proxy
+app.set('trust proxy', 1);
+
 // ============================================================
 // Security middleware
 // ============================================================
