@@ -13,6 +13,7 @@ import AppointmentsPage from '@/pages/appointments';
 import ChatPage from '@/pages/chat';
 import SettingsPage from '@/pages/settings';
 import ProfilePage from '@/pages/profile';
+import BookPage from '@/pages/book';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +53,7 @@ function AppRoutes() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/book" element={<BookPage />} />
       <Route
         path="/login"
         element={

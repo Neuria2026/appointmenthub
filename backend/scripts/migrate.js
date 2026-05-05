@@ -47,6 +47,20 @@ async function migrate() {
       console.log('ℹ️  Migration 002 already applied');
     }
 
+    // Migration 003 - staff_id on appointments
+    const col = await client.query(
+      `SELECT COUNT(*) FROM information_schema.columns
+       WHERE table_name = 'appointments' AND column_name = 'staff_id'`
+    );
+    if (parseInt(col.rows[0].count) === 0) {
+      console.log('🔄 Running migration 003 (appointments.staff_id)...');
+      const sql = fs.readFileSync(path.join(migrationsDir, '003_appointments_staff.sql'), 'utf8');
+      await client.query(sql);
+      console.log('✅ Migration 003 completed');
+    } else {
+      console.log('ℹ️  Migration 003 already applied');
+    }
+
   } catch (err) {
     console.error('❌ Migration failed:', err.message);
     process.exit(1);

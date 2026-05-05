@@ -19,6 +19,7 @@ import notificationRoutes from './routes/notifications.js';
 import chatRoutes from './routes/chat.js';
 import reviewRoutes from './routes/reviews.js';
 import staffRoutes from './routes/staff.js';
+import publicRoutes from './routes/public.js';
 
 const app = express();
 
@@ -103,6 +104,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api/staff', staffRoutes);
+app.use('/api/public', publicRoutes);
 
 // Calendar routes (inline, simple)
 import { googleCalendarService } from './services/googleCalendarService.js';
