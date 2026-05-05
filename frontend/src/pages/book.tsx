@@ -14,14 +14,12 @@ import {
 import es from 'date-fns/locale/es/index.js';
 import { bookingService, type PublicService, type BookingResult } from '@/services/bookingService';
 
-type Step = 'service' | 'staff' | 'date' | 'time' | 'info' | 'done';
+type Step = 'service' | 'booking' | 'info' | 'done';
 
-const STEPS: Step[] = ['service', 'staff', 'date', 'time', 'info', 'done'];
+const STEPS: Step[] = ['service', 'booking', 'info', 'done'];
 const STEP_LABELS: Record<Step, string> = {
   service: 'Servicio',
-  staff: 'Trabajador',
-  date: 'Fecha',
-  time: 'Hora',
+  booking: 'Cita',
   info: 'Tus datos',
   done: 'Confirmado',
 };
@@ -60,7 +58,7 @@ export default function BookPage() {
         format(selected.date!, 'yyyy-MM-dd'),
         selected.staffId
       ),
-    enabled: step === 'time' && !!selected.service && !!selected.date,
+    enabled: step === 'booking' && !!selected.service && !!selected.date,
   });
 
   const bookMutation = useMutation({
@@ -78,19 +76,21 @@ export default function BookPage() {
   const goto = (s: Step) => setStep(s);
 
   const handleSelectService = (svc: PublicService) => {
-    setSelected({ service: svc, staffId: undefined as any, date: null, slot: null });
-    // Skip staff step if service has no staff assigned
-    goto(svc.staff.length > 0 ? 'staff' : 'date');
+    setSelected({
+      service: svc,
+      staffId: svc.staff.length > 0 ? (undefined as any) : null,
+      date: null,
+      slot: null,
+    });
+    goto('booking');
   };
 
   const handleSelectStaff = (staffId: string | null) => {
     setSelected((s) => ({ ...s, staffId, slot: null }));
-    goto('date');
   };
 
   const handleSelectDate = (d: Date) => {
     setSelected((s) => ({ ...s, date: d, slot: null }));
-    goto('time');
   };
 
   const handleSelectSlot = (slot: { start: string; end: string; time: string }) => {
@@ -248,181 +248,177 @@ export default function BookPage() {
           </div>
         )}
 
-        {/* ── STEP 2: Staff ────────────────────────────────────── */}
-        {step === 'staff' && selected.service && (
-          <div>
-            <button onClick={() => goto('service')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
-              <ArrowLeft className="w-4 h-4" /> Volver
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 mb-1">¿Con quién quieres tu cita?</h1>
-            <p className="text-sm text-gray-500 mb-5">Elige un trabajador o déjanos asignarte uno</p>
-            <div className="space-y-3">
-              {/* Any staff option */}
-              <button
-                onClick={() => handleSelectStaff(null)}
-                className="w-full text-left bg-white hover:bg-primary-50 border border-gray-200 hover:border-primary-300 rounded-2xl p-4 transition-all shadow-sm hover:shadow-md group flex items-center gap-4"
-              >
-                <div className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center shrink-0">
-                  <User className="w-5 h-5 text-gray-400" />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-900 group-hover:text-primary-700">Cualquier trabajador</p>
-                  <p className="text-xs text-gray-400">Te asignaremos el primero disponible</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary-400 ml-auto shrink-0" />
+        {/* ── STEP 2: Booking (staff + date + time) ────────────── */}
+        {step === 'booking' && selected.service && (
+          <div className="space-y-6">
+            <div>
+              <button onClick={() => goto('service')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
+                <ArrowLeft className="w-4 h-4" /> Volver
               </button>
-
-              {selected.service.staff.map((member) => (
-                <button
-                  key={member.id}
-                  onClick={() => handleSelectStaff(member.id)}
-                  className="w-full text-left bg-white hover:bg-primary-50 border border-gray-200 hover:border-primary-300 rounded-2xl p-4 transition-all shadow-sm hover:shadow-md group flex items-center gap-4"
-                >
-                  <div className="w-11 h-11 bg-primary-100 rounded-full flex items-center justify-center shrink-0 text-primary-700 font-bold text-base">
-                    {member.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900 group-hover:text-primary-700">{member.name}</p>
-                    {member.specialty && (
-                      <p className="text-xs text-gray-400">{member.specialty}</p>
-                    )}
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary-400 ml-auto shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 3: Date ─────────────────────────────────────── */}
-        {step === 'date' && (
-          <div>
-            <button
-              onClick={() => goto(selected.service?.staff && selected.service.staff.length > 0 ? 'staff' : 'service')}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4"
-            >
-              <ArrowLeft className="w-4 h-4" /> Volver
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 mb-1">¿Cuándo quieres tu cita?</h1>
-            <p className="text-sm text-gray-500 mb-5">Selecciona una fecha disponible</p>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-              {/* Month navigation */}
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => setCalendarMonth((m) => subMonths(m, 1))}
-                  disabled={isSameMonth(calendarMonth, today)}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <span className="text-sm font-semibold text-gray-900 capitalize">
-                  {format(calendarMonth, 'MMMM yyyy', { locale: es })}
-                </span>
-                <button
-                  onClick={() => setCalendarMonth((m) => addMonths(m, 1))}
-                  disabled={!isBefore(calendarMonth, subMonths(maxDate, 2))}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-
-              {/* Day names */}
-              <div className="grid grid-cols-7 mb-1">
-                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d) => (
-                  <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
-                ))}
-              </div>
-
-              {/* Days */}
-              <div className="grid grid-cols-7 gap-0.5">
-                {calendarDays.map((day) => {
-                  const inMonth = isSameMonth(day, calendarMonth);
-                  const isPast = isBefore(day, today);
-                  const isTooFar = !isBefore(day, maxDate);
-                  const isSelected = selected.date && isSameDay(day, selected.date);
-                  const isDisabled = isPast || isTooFar || !inMonth;
-                  const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-
-                  return (
-                    <button
-                      key={day.toISOString()}
-                      onClick={() => !isDisabled && handleSelectDate(day)}
-                      disabled={isDisabled}
-                      className={clsx(
-                        'aspect-square flex items-center justify-center rounded-xl text-sm transition-all',
-                        isSelected && 'bg-primary-500 text-white font-semibold shadow-sm',
-                        !isSelected && !isDisabled && 'hover:bg-primary-50 text-gray-900',
-                        !isSelected && isDisabled && 'text-gray-300 cursor-default',
-                        !isSelected && !isDisabled && isWeekend && 'text-gray-400',
-                        !inMonth && 'opacity-0 pointer-events-none'
-                      )}
-                    >
-                      {format(day, 'd')}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 4: Time ─────────────────────────────────────── */}
-        {step === 'time' && selected.date && (
-          <div>
-            <button onClick={() => goto('date')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
-              <ArrowLeft className="w-4 h-4" /> Volver
-            </button>
-            <h1 className="text-xl font-bold text-gray-900 mb-1">¿A qué hora?</h1>
-            <p className="text-sm text-gray-500 mb-1 capitalize">
-              {format(selected.date, "EEEE, d 'de' MMMM", { locale: es })}
-            </p>
-            {selected.service && (
-              <p className="text-xs text-gray-400 mb-5">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">Reserva tu cita</h1>
+              <p className="text-sm text-gray-500">
                 {selected.service.name} · {formatDuration(selected.service.duration_minutes)}
               </p>
+            </div>
+
+            {/* Staff selector */}
+            {selected.service.staff.length > 0 && (
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 mb-2">Trabajador</h2>
+                <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+                  <button
+                    onClick={() => handleSelectStaff(null)}
+                    className={clsx(
+                      'shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm',
+                      selected.staffId === null
+                        ? 'bg-primary-500 border-primary-500 text-white shadow-sm'
+                        : 'bg-white border-gray-200 text-gray-700 hover:border-primary-300 hover:bg-primary-50'
+                    )}
+                  >
+                    <div className={clsx(
+                      'w-7 h-7 rounded-full flex items-center justify-center',
+                      selected.staffId === null ? 'bg-white/20' : 'bg-gray-100'
+                    )}>
+                      <User className={clsx('w-3.5 h-3.5', selected.staffId === null ? 'text-white' : 'text-gray-400')} />
+                    </div>
+                    <span className="font-medium">Cualquiera</span>
+                  </button>
+                  {selected.service.staff.map((member) => {
+                    const active = selected.staffId === member.id;
+                    return (
+                      <button
+                        key={member.id}
+                        onClick={() => handleSelectStaff(member.id)}
+                        className={clsx(
+                          'shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border transition-all text-sm',
+                          active
+                            ? 'bg-primary-500 border-primary-500 text-white shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-primary-300 hover:bg-primary-50'
+                        )}
+                      >
+                        <div className={clsx(
+                          'w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs',
+                          active ? 'bg-white/20 text-white' : 'bg-primary-100 text-primary-700'
+                        )}>
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="text-left">
+                          <p className="font-medium leading-tight">{member.name}</p>
+                          {member.specialty && (
+                            <p className={clsx('text-[10px] leading-tight', active ? 'text-white/80' : 'text-gray-400')}>
+                              {member.specialty}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
-            {slotsLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
-              </div>
-            ) : slots.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                <p>No hay horarios para este día</p>
-                <button onClick={() => goto('date')} className="mt-3 text-sm text-primary-600 hover:underline">
-                  Elegir otra fecha
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                  {slots.map((slot) => (
-                    <button
-                      key={slot.start}
-                      onClick={() => slot.available && handleSelectSlot(slot)}
-                      disabled={!slot.available}
-                      className={clsx(
-                        'py-2.5 rounded-xl text-sm font-medium transition-all',
-                        slot.available
-                          ? 'bg-white border border-gray-200 text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 shadow-sm'
-                          : 'bg-gray-50 border border-gray-100 text-gray-300 cursor-not-allowed'
-                      )}
-                    >
-                      {slot.time}
-                    </button>
+            {/* Calendar */}
+            <div>
+              <h2 className="text-sm font-semibold text-gray-900 mb-2">Fecha</h2>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    onClick={() => setCalendarMonth((m) => subMonths(m, 1))}
+                    disabled={isSameMonth(calendarMonth, today)}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-600" />
+                  </button>
+                  <span className="text-sm font-semibold text-gray-900 capitalize">
+                    {format(calendarMonth, 'MMMM yyyy', { locale: es })}
+                  </span>
+                  <button
+                    onClick={() => setCalendarMonth((m) => addMonths(m, 1))}
+                    disabled={!isBefore(calendarMonth, subMonths(maxDate, 2))}
+                    className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-7 mb-1">
+                  {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d) => (
+                    <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>
                   ))}
                 </div>
-                {slots.every((s) => !s.available) && (
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-gray-400">Todos los horarios están ocupados</p>
-                    <button onClick={() => goto('date')} className="mt-2 text-sm text-primary-600 hover:underline">
-                      Elegir otra fecha
-                    </button>
+
+                <div className="grid grid-cols-7 gap-0.5">
+                  {calendarDays.map((day) => {
+                    const inMonth = isSameMonth(day, calendarMonth);
+                    const isPast = isBefore(day, today);
+                    const isTooFar = !isBefore(day, maxDate);
+                    const isSelected = selected.date && isSameDay(day, selected.date);
+                    const isDisabled = isPast || isTooFar || !inMonth;
+                    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+
+                    return (
+                      <button
+                        key={day.toISOString()}
+                        onClick={() => !isDisabled && handleSelectDate(day)}
+                        disabled={isDisabled}
+                        className={clsx(
+                          'aspect-square flex items-center justify-center rounded-xl text-sm transition-all',
+                          isSelected && 'bg-primary-500 text-white font-semibold shadow-sm',
+                          !isSelected && !isDisabled && 'hover:bg-primary-50 text-gray-900',
+                          !isSelected && isDisabled && 'text-gray-300 cursor-default',
+                          !isSelected && !isDisabled && isWeekend && 'text-gray-400',
+                          !inMonth && 'opacity-0 pointer-events-none'
+                        )}
+                      >
+                        {format(day, 'd')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Time slots */}
+            {selected.date && (
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900 mb-2 capitalize">
+                  Hora · {format(selected.date, "EEEE d 'de' MMMM", { locale: es })}
+                </h2>
+                {slotsLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 text-primary-500 animate-spin" />
                   </div>
+                ) : slots.length === 0 ? (
+                  <div className="text-center py-6 text-gray-400 bg-white rounded-2xl border border-gray-100">
+                    <p className="text-sm">No hay horarios para este día</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                      {slots.map((slot) => (
+                        <button
+                          key={slot.start}
+                          onClick={() => slot.available && handleSelectSlot(slot)}
+                          disabled={!slot.available}
+                          className={clsx(
+                            'py-2.5 rounded-xl text-sm font-medium transition-all',
+                            slot.available
+                              ? 'bg-white border border-gray-200 text-gray-800 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 shadow-sm'
+                              : 'bg-gray-50 border border-gray-100 text-gray-300 cursor-not-allowed'
+                          )}
+                        >
+                          {slot.time}
+                        </button>
+                      ))}
+                    </div>
+                    {slots.every((s) => !s.available) && (
+                      <p className="mt-3 text-center text-sm text-gray-400">
+                        Todos los horarios están ocupados
+                      </p>
+                    )}
+                  </>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}
@@ -430,7 +426,7 @@ export default function BookPage() {
         {/* ── STEP 5: Info form ────────────────────────────────── */}
         {step === 'info' && (
           <div>
-            <button onClick={() => goto('time')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
+            <button onClick={() => goto('booking')} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
               <ArrowLeft className="w-4 h-4" /> Volver
             </button>
             <h1 className="text-xl font-bold text-gray-900 mb-1">Tus datos</h1>
