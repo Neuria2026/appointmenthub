@@ -55,16 +55,16 @@ export const publicController = {
       const result = await query(
         `SELECT s.*,
            COALESCE(
-             json_agg(
-               json_build_object('id', st.id, 'name', st.name, 'specialty', st.specialty)
-             ) FILTER (WHERE st.id IS NOT NULL AND st.is_active = true),
-             '[]'
+             (
+               SELECT json_agg(json_build_object('id', st.id, 'name', st.name, 'specialty', st.specialty))
+               FROM service_staff ss
+               JOIN staff st ON ss.staff_id = st.id
+               WHERE ss.service_id = s.id AND st.is_active = true
+             ),
+             '[]'::json
            ) as staff
          FROM services s
-         LEFT JOIN service_staff ss ON s.id = ss.service_id
-         LEFT JOIN staff st ON ss.staff_id = st.id
          WHERE s.is_active = true AND s.provider_id = $1
-         GROUP BY s.id
          ORDER BY s.name ASC`,
         [provider.id]
       );
