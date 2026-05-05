@@ -163,7 +163,7 @@ export default function BookPage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 pt-6 pb-20">
         {/* ── Step indicator (hidden on done) ─────────────────── */}
         {step !== 'done' && (
           <div className="mb-6">
@@ -205,6 +205,8 @@ export default function BookPage() {
             </div>
           </div>
         )}
+
+        <div key={step} className="animate-slide-up">
 
         {/* ── STEP 1: Service ──────────────────────────────────── */}
         {step === 'service' && (
@@ -587,6 +589,8 @@ export default function BookPage() {
             </button>
           </div>
         )}
+
+        </div>
       </div>
     </div>
   );
