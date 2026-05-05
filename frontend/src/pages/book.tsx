@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -38,6 +38,8 @@ export default function BookPage() {
   const [formError, setFormError] = useState('');
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [confirmation, setConfirmation] = useState<BookingResult | null>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const slotsRef = useRef<HTMLDivElement>(null);
 
   // ── Data fetching ─────────────────────────────────────────
   const { data: info } = useQuery({
@@ -87,11 +89,24 @@ export default function BookPage() {
 
   const handleSelectStaff = (staffId: string | null) => {
     setSelected((s) => ({ ...s, staffId, slot: null }));
+    requestAnimationFrame(() => {
+      calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   const handleSelectDate = (d: Date) => {
     setSelected((s) => ({ ...s, date: d, slot: null }));
   };
+
+  // Scroll to slots when a date is picked (after the slots section renders)
+  useEffect(() => {
+    if (step === 'booking' && selected.date) {
+      const t = setTimeout(() => {
+        slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+      return () => clearTimeout(t);
+    }
+  }, [selected.date, step]);
 
   const handleSelectSlot = (slot: { start: string; end: string; time: string }) => {
     setSelected((s) => ({ ...s, slot }));
@@ -318,7 +333,7 @@ export default function BookPage() {
             )}
 
             {/* Calendar */}
-            <div>
+            <div ref={calendarRef} className="scroll-mt-4">
               <h2 className="text-sm font-semibold text-gray-900 mb-2">Fecha</h2>
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -380,7 +395,7 @@ export default function BookPage() {
 
             {/* Time slots */}
             {selected.date && (
-              <div>
+              <div ref={slotsRef} className="scroll-mt-4">
                 <h2 className="text-sm font-semibold text-gray-900 mb-2 capitalize">
                   Hora · {format(selected.date, "EEEE d 'de' MMMM", { locale: es })}
                 </h2>
