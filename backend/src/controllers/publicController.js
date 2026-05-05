@@ -15,16 +15,14 @@ export const publicController = {
   async _resolveProvider(providerId) {
     if (providerId) {
       const r = await query(
-        `SELECT id, full_name, email, phone, address, logo_url
-         FROM users WHERE id = $1 AND role = 'provider'`,
+        `SELECT id, full_name, email, phone, address FROM users WHERE id = $1 AND role = 'provider'`,
         [providerId]
       );
       if (r.rows.length === 0) throw new AppError('Proveedor no encontrado', 404);
       return r.rows[0];
     }
     const r = await query(
-      `SELECT id, full_name, email, phone, address, logo_url
-       FROM users WHERE role = 'provider' ORDER BY created_at ASC LIMIT 1`
+      `SELECT id, full_name, email, phone, address FROM users WHERE role = 'provider' ORDER BY created_at ASC LIMIT 1`
     );
     return r.rows[0] || null;
   },
