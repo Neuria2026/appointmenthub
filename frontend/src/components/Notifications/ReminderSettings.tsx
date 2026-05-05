@@ -5,7 +5,7 @@ import { Loader2, MessageCircle, Send, Mail, Bell } from 'lucide-react';
 import { clsx } from 'clsx';
 import { notificationPreferencesSchema, type NotificationPreferencesFormValues } from '@/utils/validators';
 import { useNotifications } from '@/hooks/useNotifications';
-import { NOTIFICATION_CHANNELS, REMINDER_TIMES } from '@/utils/constants';
+import { NOTIFICATION_CHANNELS, REMINDER_TIMES, TELEGRAM_BOT_USERNAME } from '@/utils/constants';
 import type { NotificationChannel, ReminderTime } from '@/types';
 
 export function ReminderSettings() {
@@ -141,7 +141,7 @@ export function ReminderSettings() {
           />
           {errors.telegram_id && <p className="error-text">{errors.telegram_id.message}</p>}
           <p className="text-xs text-gray-400 mt-1">
-            Escribe <span className="font-mono">/start</span> al bot @AppointmentHubBot
+            Escribe <span className="font-mono">/start</span> al bot @{TELEGRAM_BOT_USERNAME}
           </p>
         </div>
       )}

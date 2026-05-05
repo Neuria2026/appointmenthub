@@ -21,6 +21,7 @@ const envSchema = z.object({
   PORT: z.string().default('5000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
+  APP_NAME: z.string().default('AppointmentHub'),
 });
 
 const parsed = envSchema.safeParse(process.env);

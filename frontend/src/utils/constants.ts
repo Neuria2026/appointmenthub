@@ -78,6 +78,10 @@ export const TOKEN_KEY = 'appointmenthub_token';
 export const REFRESH_TOKEN_KEY = 'appointmenthub_refresh_token';
 export const USER_KEY = 'appointmenthub_user';
 
+// Branding (configurable per client)
+export const APP_NAME = import.meta.env.VITE_APP_NAME || 'AppointmentHub';
+export const TELEGRAM_BOT_USERNAME = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'AppointmentHubBot';
+
 // Query keys
 export const QUERY_KEYS = {
   appointments: 'appointments',

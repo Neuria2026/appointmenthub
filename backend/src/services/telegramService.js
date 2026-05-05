@@ -52,7 +52,7 @@ export const telegramService = {
       `📋 *Servicio:* ${appointment.service?.name || 'N/A'}\n` +
       `📅 *Fecha:* ${dateStr}\n` +
       `👤 *Proveedor:* ${appointment.provider?.full_name || 'N/A'}\n\n` +
-      `_AppointmentHub_`;
+      `_${env.APP_NAME}_`;
 
     return this.sendTelegramMessage(chatId, message);
   },
@@ -100,7 +100,7 @@ export const telegramService = {
       const chatId = msg.chat.id;
       telegramBot.sendMessage(
         chatId,
-        `👋 ¡Bienvenido a *AppointmentHub*!\n\n` +
+        `👋 ¡Bienvenido a *${env.APP_NAME}*!\n\n` +
         `Soy tu asistente de citas. Para recibir recordatorios, configura tu ID de Telegram en la plataforma: \`${chatId}\`\n\n` +
         `Comandos disponibles:\n` +
         `/start - Iniciar el bot\n` +
@@ -113,10 +113,10 @@ export const telegramService = {
     telegramBot.onText(/\/help/, (msg) => {
       telegramBot.sendMessage(
         msg.chat.id,
-        `📚 *Ayuda - AppointmentHub Bot*\n\n` +
+        `📚 *Ayuda - ${env.APP_NAME} Bot*\n\n` +
         `Para recibir recordatorios de tus citas:\n` +
         `1. Copia tu ID: \`${msg.chat.id}\`\n` +
-        `2. Ve a AppointmentHub → Configuración → Notificaciones\n` +
+        `2. Ve a ${env.APP_NAME} → Configuración → Notificaciones\n` +
         `3. Activa Telegram e ingresa tu ID\n\n` +
         `¡Listo! Recibirás recordatorios automáticos aquí.`,
         { parse_mode: 'Markdown' }
@@ -126,7 +126,7 @@ export const telegramService = {
     telegramBot.onText(/\/myid/, (msg) => {
       telegramBot.sendMessage(
         msg.chat.id,
-        `🆔 Tu ID de Telegram es: \`${msg.chat.id}\`\n\nCópialo y pégalo en AppointmentHub → Configuración → Notificaciones.`,
+        `🆔 Tu ID de Telegram es: \`${msg.chat.id}\`\n\nCópialo y pégalo en ${env.APP_NAME} → Configuración → Notificaciones.`,
         { parse_mode: 'Markdown' }
       );
     });

@@ -93,7 +93,7 @@ export const googleCalendarService = {
       const calendar = google.calendar({ version: 'v3', auth: authClient });
 
       const event = {
-        summary: `${appointment.service?.name || 'Cita'} - AppointmentHub`,
+        summary: `${appointment.service?.name || 'Cita'} - ${env.APP_NAME}`,
         description: appointment.notes || '',
         start: { dateTime: appointment.start_time, timeZone: 'America/Mexico_City' },
         end: { dateTime: appointment.end_time, timeZone: 'America/Mexico_City' },

@@ -85,7 +85,7 @@ if (env.NODE_ENV === 'development') {
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'AppointmentHub API',
+    service: `${env.APP_NAME} API`,
     version: '0.1.0',
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,

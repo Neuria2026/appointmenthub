@@ -48,7 +48,7 @@ export const whatsappService = {
     const startDate = new Date(appointment.start_time);
     const dateStr = format(startDate, "EEEE, d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es });
 
-    const message = `✅ *Cita Confirmada - AppointmentHub*
+    const message = `✅ *Cita Confirmada - ${env.APP_NAME}*
 
 Hola ${appointment.client?.full_name || 'Cliente'}, tu cita ha sido confirmada.
 
@@ -58,7 +58,7 @@ Hola ${appointment.client?.full_name || 'Cliente'}, tu cita ha sido confirmada.
 
 Si necesitas cambiar o cancelar tu cita, hazlo con al menos 24 horas de anticipación.
 
-_AppointmentHub_`;
+_${env.APP_NAME}_`;
 
     return this.sendWhatsAppMessage(phone, message);
   },
@@ -79,7 +79,7 @@ _AppointmentHub_`;
     else if (hoursAhead >= 1) timeLabel = `en ${hoursAhead} hora${hoursAhead !== 1 ? 's' : ''}`;
     else timeLabel = 'en 15 minutos';
 
-    const message = `⏰ *Recordatorio de Cita - AppointmentHub*
+    const message = `⏰ *Recordatorio de Cita - ${env.APP_NAME}*
 
 Hola ${appointment.client?.full_name || 'Cliente'}, te recordamos que tienes una cita *${timeLabel}*.
 
@@ -105,7 +105,7 @@ Hola ${appointment.client?.full_name || 'Cliente'}, te recordamos que tienes una
     const oldDate = new Date(previousTime);
     const oldDateStr = format(oldDate, "EEEE, d 'de' MMMM 'a las' HH:mm", { locale: es });
 
-    const message = `📅 *Cita Reprogramada - AppointmentHub*
+    const message = `📅 *Cita Reprogramada - ${env.APP_NAME}*
 
 Hola ${appointment.client?.full_name || 'Cliente'}, tu cita ha sido reprogramada.
 
@@ -113,7 +113,7 @@ Hola ${appointment.client?.full_name || 'Cliente'}, tu cita ha sido reprogramada
 ❌ *Fecha anterior:* ${oldDateStr}
 ✅ *Nueva fecha:* ${newDateStr}
 
-_AppointmentHub_`;
+_${env.APP_NAME}_`;
 
     return this.sendWhatsAppMessage(phone, message);
   },

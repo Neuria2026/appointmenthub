@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Calendar, Zap, ArrowLeft } from 'lucide-react';
 import { RegisterForm } from '@/components/Auth/RegisterForm';
+import { APP_NAME } from '@/utils/constants';
 
 export default function RegisterPage() {
   return (
@@ -15,7 +16,7 @@ export default function RegisterPage() {
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <Calendar className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-bold text-white">AppointmentHub</span>
+          <span className="text-xl font-bold text-white">{APP_NAME}</span>
         </div>
 
         <div className="relative">
@@ -64,9 +65,7 @@ export default function RegisterPage() {
             <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
               <Calendar className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">
-              Appointment<span className="text-primary-600">Hub</span>
-            </span>
+            <span className="text-lg font-bold text-gray-900">{APP_NAME}</span>
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Crear cuenta gratis</h2>

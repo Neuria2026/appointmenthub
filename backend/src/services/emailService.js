@@ -22,7 +22,7 @@ async function sendEmail({ to, subject, html, text }) {
       to,
       from: {
         email: env.SENDGRID_FROM_EMAIL,
-        name: 'AppointmentHub',
+        name: '${env.APP_NAME}',
       },
       subject,
       html,
@@ -41,13 +41,13 @@ const baseHtml = (content) => `
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AppointmentHub</title>
+  <title>${env.APP_NAME}</title>
 </head>
 <body style="font-family: 'Inter', Arial, sans-serif; background: #f9fafb; margin: 0; padding: 0;">
   <div style="max-width: 600px; margin: 24px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%); padding: 32px 40px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">📅 AppointmentHub</h1>
+      <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 800;">📅 ${env.APP_NAME}</h1>
     </div>
     <!-- Content -->
     <div style="padding: 40px;">
@@ -56,7 +56,7 @@ const baseHtml = (content) => `
     <!-- Footer -->
     <div style="background: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
       <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-        © ${new Date().getFullYear()} AppointmentHub ·
+        © ${new Date().getFullYear()} ${env.APP_NAME} ·
         <a href="${env.FRONTEND_URL}" style="color: #6366f1;">Visitar plataforma</a>
       </p>
     </div>
@@ -99,7 +99,7 @@ export const emailService = {
 
     return sendEmail({
       to,
-      subject: `✅ Cita confirmada - ${appointment.service?.name || 'AppointmentHub'}`,
+      subject: `✅ Cita confirmada - ${appointment.service?.name || '${env.APP_NAME}'}`,
       html: baseHtml(content),
     });
   },
