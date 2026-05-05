@@ -33,9 +33,18 @@ export const publicController = {
   async getInfo(req, res, next) {
     try {
       const provider = await publicController._resolveProvider(req.query.p);
+      let logo_url = null;
+      if (provider) {
+        try {
+          const lr = await query('SELECT logo_url FROM users WHERE id = $1', [provider.id]);
+          logo_url = lr.rows[0]?.logo_url ?? null;
+        } catch {
+          // logo_url column may not exist yet
+        }
+      }
       res.json({
         success: true,
-        data: { ...(provider || {}), app_name: env.APP_NAME },
+        data: { ...(provider || {}), logo_url, app_name: env.APP_NAME },
       });
     } catch (error) {
       next(error);
