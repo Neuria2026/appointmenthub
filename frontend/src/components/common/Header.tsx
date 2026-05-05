@@ -16,7 +16,7 @@ import {
 import { clsx } from 'clsx';
 import { useAuthStore } from '@/store/store';
 import { getInitials } from '@/utils/formatters';
-import { DEFAULT_AVATAR } from '@/utils/constants';
+import { DEFAULT_AVATAR, APP_NAME } from '@/utils/constants';
 
 const navLinks = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -47,12 +47,22 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <Calendar className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-gray-900">
-              Appointment<span className="text-primary-600">Hub</span>
-            </span>
+            {user?.logo_url ? (
+              <img
+                src={user.logo_url}
+                alt={APP_NAME}
+                className="h-8 max-w-[140px] object-contain"
+              />
+            ) : (
+              <>
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
+                  <Calendar className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-lg font-bold text-gray-900 hidden sm:block">
+                  {APP_NAME}
+                </span>
+              </>
+            )}
           </Link>
 
           {/* Desktop Nav */}

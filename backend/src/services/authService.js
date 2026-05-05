@@ -95,7 +95,7 @@ export const authService = {
    */
   async getUserById(userId) {
     const result = await query(
-      'SELECT id, email, full_name, phone, address, role, profile_picture_url, created_at, updated_at FROM users WHERE id = $1',
+      'SELECT id, email, full_name, phone, address, role, profile_picture_url, logo_url, created_at, updated_at FROM users WHERE id = $1',
       [userId]
     );
     if (result.rows.length === 0) {

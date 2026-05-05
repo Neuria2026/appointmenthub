@@ -18,6 +18,7 @@ import userRoutes from './routes/users.js';
 import notificationRoutes from './routes/notifications.js';
 import chatRoutes from './routes/chat.js';
 import reviewRoutes from './routes/reviews.js';
+import staffRoutes from './routes/staff.js';
 
 const app = express();
 
@@ -67,7 +68,7 @@ const authLimiter = rateLimit({
 // ============================================================
 // Body parsing
 // ============================================================
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '3mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging with Morgan
@@ -101,6 +102,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api', reviewRoutes);
+app.use('/api/staff', staffRoutes);
 
 // Calendar routes (inline, simple)
 import { googleCalendarService } from './services/googleCalendarService.js';
@@ -145,9 +147,19 @@ app.get('/api/services', authenticate, async (req, res, next) => {
   try {
     const { query: dbQuery } = await import('./config/database.js');
     const result = await dbQuery(
-      `SELECT s.*, json_build_object('id', u.id, 'full_name', u.full_name, 'email', u.email) as provider
+      `SELECT s.*,
+         json_build_object('id', u.id, 'full_name', u.full_name, 'email', u.email) as provider,
+         COALESCE(
+           json_agg(
+             json_build_object('id', st.id, 'name', st.name, 'specialty', st.specialty)
+           ) FILTER (WHERE st.id IS NOT NULL),
+           '[]'
+         ) as staff
        FROM services s
        LEFT JOIN users u ON s.provider_id = u.id
+       LEFT JOIN service_staff ss ON s.id = ss.service_id
+       LEFT JOIN staff st ON ss.staff_id = st.id
+       GROUP BY s.id, u.id
        ORDER BY s.created_at DESC`,
       []
     );
@@ -158,6 +170,7 @@ app.get('/api/services', authenticate, async (req, res, next) => {
 });
 
 app.post('/api/services', authenticate, validate(schemas.createService), userController.createService);
+app.put('/api/services/:serviceId', authenticate, userController.updateService);
 app.delete('/api/services/:serviceId', authenticate, userController.deleteService);
 
 // ============================================================

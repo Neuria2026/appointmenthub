@@ -7,30 +7,46 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const sqlPath = path.join(__dirname, '..', 'database', 'migrations', '001_initial_schema.sql');
+const migrationsDir = path.join(__dirname, '..', 'database', 'migrations');
 
 const client = new pg.Client({ connectionString: process.env.DATABASE_URL });
+
+async function tableExists(name) {
+  const result = await client.query(
+    `SELECT COUNT(*) FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = $1`,
+    [name]
+  );
+  return parseInt(result.rows[0].count) > 0;
+}
 
 async function migrate() {
   try {
     await client.connect();
     console.log('✅ Connected to database');
 
-    // Check if tables already exist
-    const result = await client.query(`
-      SELECT COUNT(*) FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_name = 'users'
-    `);
-    const tablesExist = parseInt(result.rows[0].count) > 0;
-
-    if (tablesExist) {
-      console.log('ℹ️  Schema already exists, skipping migration');
-    } else {
-      console.log('🔄 Running migrations...');
-      const sql = fs.readFileSync(sqlPath, 'utf8');
+    // Migration 001 - initial schema
+    const usersExist = await tableExists('users');
+    if (!usersExist) {
+      console.log('🔄 Running migration 001 (initial schema)...');
+      const sql = fs.readFileSync(path.join(migrationsDir, '001_initial_schema.sql'), 'utf8');
       await client.query(sql);
-      console.log('✅ Migration completed successfully');
+      console.log('✅ Migration 001 completed');
+    } else {
+      console.log('ℹ️  Migration 001 already applied');
     }
+
+    // Migration 002 - logo + staff
+    const staffExists = await tableExists('staff');
+    if (!staffExists) {
+      console.log('🔄 Running migration 002 (logo + staff)...');
+      const sql = fs.readFileSync(path.join(migrationsDir, '002_logo_staff.sql'), 'utf8');
+      await client.query(sql);
+      console.log('✅ Migration 002 completed');
+    } else {
+      console.log('ℹ️  Migration 002 already applied');
+    }
+
   } catch (err) {
     console.error('❌ Migration failed:', err.message);
     process.exit(1);

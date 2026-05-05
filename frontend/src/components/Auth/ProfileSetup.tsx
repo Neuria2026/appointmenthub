@@ -17,7 +17,11 @@ const STEPS = [
   { id: 3, label: 'Completado' },
 ];
 
-export function ProfileSetup() {
+interface ProfileSetupProps {
+  onDone?: () => void;
+}
+
+export function ProfileSetup({ onDone }: ProfileSetupProps = {}) {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isProvider = user?.role === 'provider';
@@ -83,7 +87,8 @@ export function ProfileSetup() {
   };
 
   const handleFinish = () => {
-    navigate('/dashboard');
+    if (onDone) onDone();
+    else navigate('/dashboard');
   };
 
   return (

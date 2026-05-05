@@ -6,7 +6,7 @@ export const userController = {
   async getUser(req, res, next) {
     try {
       const result = await query(
-        'SELECT id, email, full_name, phone, address, role, profile_picture_url, created_at, updated_at FROM users WHERE id = $1',
+        'SELECT id, email, full_name, phone, address, role, profile_picture_url, logo_url, created_at, updated_at FROM users WHERE id = $1',
         [req.params.id]
       );
       if (result.rows.length === 0) {
@@ -25,16 +25,24 @@ export const userController = {
       }
 
       const { full_name, phone, address, profile_picture_url } = req.body;
+      // logo_url can be explicitly set to null to clear it
+      const logo_url = Object.prototype.hasOwnProperty.call(req.body, 'logo_url')
+        ? req.body.logo_url
+        : undefined;
+
       const result = await query(
         `UPDATE users
          SET full_name = COALESCE($1, full_name),
              phone = COALESCE($2, phone),
              address = COALESCE($3, address),
              profile_picture_url = COALESCE($4, profile_picture_url),
+             logo_url = CASE WHEN $5::boolean THEN $6 ELSE logo_url END,
              updated_at = NOW()
-         WHERE id = $5
-         RETURNING id, email, full_name, phone, address, role, profile_picture_url, updated_at`,
-        [full_name, phone, address, profile_picture_url, req.params.id]
+         WHERE id = $7
+         RETURNING id, email, full_name, phone, address, role, profile_picture_url, logo_url, updated_at`,
+        [full_name, phone, address, profile_picture_url,
+          logo_url !== undefined, logo_url ?? null,
+          req.params.id]
       );
       res.json({ success: true, data: result.rows[0] });
     } catch (error) {
@@ -79,7 +87,19 @@ export const userController = {
   async getServices(req, res, next) {
     try {
       const result = await query(
-        'SELECT * FROM services WHERE provider_id = $1 ORDER BY created_at DESC',
+        `SELECT s.*,
+           COALESCE(
+             json_agg(
+               json_build_object('id', st.id, 'name', st.name, 'specialty', st.specialty)
+             ) FILTER (WHERE st.id IS NOT NULL),
+             '[]'
+           ) as staff
+         FROM services s
+         LEFT JOIN service_staff ss ON s.id = ss.service_id
+         LEFT JOIN staff st ON ss.staff_id = st.id
+         WHERE s.provider_id = $1
+         GROUP BY s.id
+         ORDER BY s.created_at DESC`,
         [req.params.id]
       );
       res.json({ success: true, data: result.rows });
@@ -100,6 +120,35 @@ export const userController = {
         [id, req.user.id, name, duration_minutes, price, description || null]
       );
       res.status(201).json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async updateService(req, res, next) {
+    try {
+      const { name, duration_minutes, price, description, is_active } = req.body;
+
+      const existing = await query(
+        'SELECT provider_id FROM services WHERE id = $1',
+        [req.params.serviceId]
+      );
+
+      if (existing.rows.length === 0) throw new AppError('Servicio no encontrado', 404);
+      if (existing.rows[0].provider_id !== req.user.id) throw new AppError('Sin permisos', 403);
+
+      const result = await query(
+        `UPDATE services
+         SET name = COALESCE($1, name),
+             duration_minutes = COALESCE($2, duration_minutes),
+             price = COALESCE($3, price),
+             description = COALESCE($4, description),
+             is_active = COALESCE($5, is_active)
+         WHERE id = $6
+         RETURNING *`,
+        [name, duration_minutes, price, description, is_active, req.params.serviceId]
+      );
+      res.json({ success: true, data: result.rows[0] });
     } catch (error) {
       next(error);
     }

@@ -22,9 +22,34 @@ export interface User {
   address?: string;
   role: UserRole;
   profile_picture_url?: string;
+  logo_url?: string;
   google_calendar_connected?: boolean;
   created_at: string;
   updated_at: string;
+}
+
+// ============================================================
+// Staff
+// ============================================================
+
+export interface Staff {
+  id: string;
+  provider_id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
+  is_active: boolean;
+  service_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffFormData {
+  name: string;
+  email?: string;
+  phone?: string;
+  specialty?: string;
 }
 
 export interface UserProfile extends User {
@@ -43,8 +68,10 @@ export interface Service {
   duration_minutes: number;
   price: number;
   description?: string;
+  is_active: boolean;
   created_at: string;
   provider?: Pick<User, 'id' | 'full_name' | 'email'>;
+  staff?: Pick<Staff, 'id' | 'name' | 'specialty'>[];
 }
 
 // ============================================================
