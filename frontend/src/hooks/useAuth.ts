@@ -29,7 +29,8 @@ export function useAuth() {
       try {
         await storeLogin({ email, password });
         toast.success('¡Bienvenido de vuelta!');
-        navigate('/dashboard');
+        const role = useAuthStore.getState().user?.role;
+        navigate(role === 'client' ? '/client' : '/dashboard');
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : 'Error al iniciar sesión. Intenta de nuevo.';

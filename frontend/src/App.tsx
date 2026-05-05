@@ -14,6 +14,7 @@ import ChatPage from '@/pages/chat';
 import SettingsPage from '@/pages/settings';
 import ProfilePage from '@/pages/profile';
 import BookPage from '@/pages/book';
+import ClientPage from '@/pages/client';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,12 +40,27 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 // Public route - redirect if already authenticated
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const target = user?.role === 'client' ? '/client' : '/dashboard';
+    return <Navigate to={target} replace />;
   }
 
+  return <>{children}</>;
+}
+
+// Client-only route
+function ClientRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (user?.role !== 'client') {
+    return <Navigate to="/dashboard" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -68,6 +84,16 @@ function AppRoutes() {
           <PublicRoute>
             <RegisterPage />
           </PublicRoute>
+        }
+      />
+
+      {/* Client-only route */}
+      <Route
+        path="/client"
+        element={
+          <ClientRoute>
+            <ClientPage />
+          </ClientRoute>
         }
       />
 

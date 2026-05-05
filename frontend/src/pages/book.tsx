@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Clock, DollarSign, ChevronLeft, ChevronRight, Calendar,
-  User, Check, ArrowLeft, Loader2, Mail, Phone, FileText, Briefcase,
+  User, Check, ArrowLeft, Loader2, Mail, Phone, FileText, Briefcase, LogIn,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import {
@@ -12,7 +12,9 @@ import {
   startOfWeek, endOfWeek, isSameMonth,
 } from 'date-fns';
 import es from 'date-fns/locale/es/index.js';
+import toast from 'react-hot-toast';
 import { bookingService, type PublicService, type BookingResult } from '@/services/bookingService';
+import { useAuthStore } from '@/store/store';
 
 type Step = 'service' | 'booking' | 'info' | 'done';
 
@@ -27,6 +29,8 @@ const STEP_LABELS: Record<Step, string> = {
 export default function BookPage() {
   const [searchParams] = useSearchParams();
   const providerId = searchParams.get('p') || undefined;
+  const authUser = useAuthStore((s) => s.user);
+  const isClient = useAuthStore((s) => s.isAuthenticated && s.user?.role === 'client');
   const [step, setStep] = useState<Step>('service');
   const [selected, setSelected] = useState<{
     service: PublicService | null;
@@ -70,7 +74,9 @@ export default function BookPage() {
       setStep('done');
     },
     onError: (err: any) => {
-      setFormError(err?.response?.data?.message || 'Error al confirmar la cita');
+      const message = err?.response?.data?.message || 'Error al confirmar la cita';
+      setFormError(message);
+      if (isClient) toast.error(message);
     },
   });
 
@@ -110,7 +116,19 @@ export default function BookPage() {
 
   const handleSelectSlot = (slot: { start: string; end: string; time: string }) => {
     setSelected((s) => ({ ...s, slot }));
-    goto('info');
+    if (isClient && authUser) {
+      // Authenticated client: book directly without info step
+      bookMutation.mutate({
+        service_id: selected.service!.id,
+        staff_id: selected.staffId || null,
+        start_time: slot.start,
+        end_time: slot.end,
+        client_name: authUser.full_name,
+        client_email: authUser.email,
+      });
+    } else {
+      goto('info');
+    }
   };
 
   const handleBook = () => {
@@ -160,6 +178,25 @@ export default function BookPage() {
               <span className="font-bold text-gray-900">{info?.app_name || 'Reservas'}</span>
             </>
           )}
+          <div className="ml-auto">
+            {isClient && authUser ? (
+              <Link
+                to="/client"
+                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <User className="w-3.5 h-3.5" />
+                {authUser.full_name?.split(' ')[0] || 'Mi cuenta'}
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-primary-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Iniciar sesión
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 

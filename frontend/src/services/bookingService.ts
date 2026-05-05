@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_BASE_URL } from '@/utils/constants';
+import { API_BASE_URL, TOKEN_KEY } from '@/utils/constants';
 
 const api = axios.create({ baseURL: `${API_BASE_URL}/api/public` });
 
@@ -71,7 +71,9 @@ export const bookingService = {
   },
 
   async book(payload: BookingPayload): Promise<BookingResult> {
-    const res = await api.post<{ data: BookingResult }>('/book', payload);
+    const token = localStorage.getItem(TOKEN_KEY);
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    const res = await api.post<{ data: BookingResult }>('/book', payload, { headers });
     return res.data.data;
   },
 };
