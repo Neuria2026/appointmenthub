@@ -2,8 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
-  Clock, ChevronLeft, ChevronRight, Calendar,
-  User, Check, ArrowLeft, Loader2, Mail, Phone, FileText, Briefcase, MapPin,
+  Clock, DollarSign, ChevronLeft, ChevronRight, Calendar,
+  User, Check, ArrowLeft, Loader2, Mail, Phone, FileText, Briefcase,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import {
@@ -146,66 +146,26 @@ export default function BookPage() {
     min < 60 ? `${min}min` : `${Math.floor(min / 60)}h${min % 60 ? ` ${min % 60}min` : ''}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* ── Hero Header ───────────────────────────────────────── */}
-      {step === 'service' ? (
-        <header className="bg-white border-b border-gray-100">
-          <div className="h-28 bg-gradient-to-br from-primary-500 via-primary-600 to-secondary-500" />
-          <div className="max-w-2xl mx-auto px-4 pb-5 -mt-12">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-start gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-white shadow ring-1 ring-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                {info?.logo_url ? (
-                  <img src={info.logo_url} alt={info.full_name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                    <Calendar className="w-7 h-7 text-white" />
-                  </div>
-                )}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      {/* ── Brand Header ─────────────────────────────────────── */}
+      <header className="bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+          {info?.logo_url ? (
+            <img src={info.logo_url} alt={info.app_name} className="h-8 max-w-[140px] object-contain" />
+          ) : (
+            <>
+              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-white" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg font-bold text-gray-900 leading-tight truncate">
-                  {info?.full_name || info?.app_name || 'Reservas'}
-                </h1>
-                <div className="mt-1.5 space-y-1">
-                  {info?.address && (
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{info.address}</span>
-                    </p>
-                  )}
-                  {info?.phone && (
-                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 shrink-0" />
-                      <span className="truncate">{info.phone}</span>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-      ) : (
-        <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-10">
-          <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white ring-1 ring-gray-100 flex items-center justify-center overflow-hidden">
-              {info?.logo_url ? (
-                <img src={info.logo_url} alt={info.full_name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-white" />
-                </div>
-              )}
-            </div>
-            <span className="font-semibold text-gray-900 text-sm truncate">
-              {info?.full_name || info?.app_name || 'Reservas'}
-            </span>
-          </div>
-        </header>
-      )}
+              <span className="font-bold text-gray-900">{info?.app_name || 'Reservas'}</span>
+            </>
+          )}
+        </div>
+      </header>
 
       <div className="max-w-2xl mx-auto px-4 pt-6 pb-20">
-        {/* ── Step indicator (hidden on service & done) ────────── */}
-        {step !== 'done' && step !== 'service' && (
+        {/* ── Step indicator (hidden on done) ─────────────────── */}
+        {step !== 'done' && (
           <div className="mb-6">
             <div className="flex items-center gap-0">
               {displaySteps.map((s, i) => {
@@ -251,57 +211,54 @@ export default function BookPage() {
         {/* ── STEP 1: Service ──────────────────────────────────── */}
         {step === 'service' && (
           <div>
-            <h2 className="text-base font-bold text-gray-900 mb-3 px-1">Servicios</h2>
+            <h1 className="text-xl font-bold text-gray-900 mb-1">¿Qué servicio deseas?</h1>
+            <p className="text-sm text-gray-500 mb-5">Selecciona el servicio que quieres reservar</p>
             {servicesLoading ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : servicesError ? (
-              <div className="text-center py-12 text-error-400 bg-white rounded-2xl border border-gray-100">
+              <div className="text-center py-12 text-error-400">
                 <p className="font-medium">No se pudieron cargar los servicios</p>
                 <p className="text-xs mt-1 text-gray-400">Comprueba que el enlace es correcto</p>
               </div>
             ) : services.length === 0 ? (
-              <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100">
+              <div className="text-center py-12 text-gray-400">
                 <Briefcase className="w-10 h-10 mx-auto mb-3 opacity-30" />
                 <p>No hay servicios disponibles</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {services.map((svc) => (
-                  <div
+                  <button
                     key={svc.id}
-                    className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-4 hover:border-primary-200 transition-colors"
+                    onClick={() => handleSelectService(svc)}
+                    className="w-full text-left bg-white hover:bg-primary-50 border border-gray-200 hover:border-primary-300 rounded-2xl p-4 transition-all shadow-sm hover:shadow-md group"
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 leading-snug">{svc.name}</p>
-                      {svc.description && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{svc.description}</p>
-                      )}
-                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
-                          {formatDuration(svc.duration_minutes)}
-                        </span>
-                        {Number(svc.price) > 0 && (
-                          <>
-                            <span className="text-gray-300">·</span>
-                            <span className="font-semibold text-gray-900">
-                              {Number(svc.price).toFixed(2)}€
-                            </span>
-                          </>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors">
+                          {svc.name}
+                        </p>
+                        {svc.description && (
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{svc.description}</p>
                         )}
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {formatDuration(svc.duration_minutes)}
+                          </span>
+                          {Number(svc.price) > 0 && (
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" /> {Number(svc.price).toFixed(2)}€
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-primary-400 shrink-0 mt-1 transition-colors" />
                     </div>
-                    <button
-                      onClick={() => handleSelectService(svc)}
-                      className="shrink-0 px-4 py-2 rounded-full bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold transition-colors shadow-sm"
-                    >
-                      Reservar
-                    </button>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
