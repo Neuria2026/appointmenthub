@@ -37,25 +37,6 @@ export function Sidebar({ className }: SidebarProps) {
         className
       )}
     >
-      {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-        {!collapsed && (
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
-              <Calendar className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm font-bold text-gray-900">
-              Appointment<span className="text-primary-600">Hub</span>
-            </span>
-          </Link>
-        )}
-        {collapsed && (
-          <div className="w-7 h-7 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center mx-auto">
-            <Calendar className="w-4 h-4 text-white" />
-          </div>
-        )}
-      </div>
-
       {/* Nav Items */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         {navItems.map(({ path, label, icon: Icon }) => {
@@ -75,14 +56,11 @@ export function Sidebar({ className }: SidebarProps) {
             >
               <Icon
                 className={clsx(
-                  'flex-shrink-0 transition-colors',
-                  collapsed ? 'w-5 h-5' : 'w-5 h-5',
+                  'w-5 h-5 flex-shrink-0 transition-colors',
                   isActive ? 'text-primary-600' : 'text-gray-400 group-hover:text-gray-600'
                 )}
               />
-              {!collapsed && (
-                <span className="truncate">{label}</span>
-              )}
+              {!collapsed && <span className="truncate">{label}</span>}
               {isActive && !collapsed && (
                 <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary-500" />
               )}

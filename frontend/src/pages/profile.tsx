@@ -134,10 +134,10 @@ export default function ProfilePage() {
     min < 60 ? `${min}min` : `${Math.floor(min / 60)}h${min % 60 ? ` ${min % 60}min` : ''}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col">
       <Header />
       <div className="flex flex-1 overflow-hidden">
-        <div className="hidden md:flex h-[calc(100vh-4rem)] sticky top-16">
+        <div className="hidden md:flex">
           <Sidebar />
         </div>
 

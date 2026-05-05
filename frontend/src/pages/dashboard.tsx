@@ -11,11 +11,11 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col">
       <Header />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - hidden on mobile */}
-        <div className="hidden md:flex h-[calc(100vh-4rem)] sticky top-16">
+        <div className="hidden md:flex">
           <Sidebar />
         </div>
 
