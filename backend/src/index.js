@@ -98,13 +98,13 @@ app.get('/health', (req, res) => {
 // API Routes
 // ============================================================
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/public', publicRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
-app.use('/api', reviewRoutes);
 app.use('/api/staff', staffRoutes);
-app.use('/api/public', publicRoutes);
+app.use('/api', reviewRoutes);
 
 // Calendar routes (inline, simple)
 import { googleCalendarService } from './services/googleCalendarService.js';
