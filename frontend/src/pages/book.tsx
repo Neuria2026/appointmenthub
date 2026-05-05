@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Clock, DollarSign, ChevronLeft, ChevronRight, Calendar,
@@ -26,6 +27,8 @@ const STEP_LABELS: Record<Step, string> = {
 };
 
 export default function BookPage() {
+  const [searchParams] = useSearchParams();
+  const providerId = searchParams.get('p') || undefined;
   const [step, setStep] = useState<Step>('service');
   const [selected, setSelected] = useState<{
     service: PublicService | null;
@@ -40,13 +43,13 @@ export default function BookPage() {
 
   // ── Data fetching ─────────────────────────────────────────
   const { data: info } = useQuery({
-    queryKey: ['public-info'],
-    queryFn: bookingService.getInfo,
+    queryKey: ['public-info', providerId],
+    queryFn: () => bookingService.getInfo(providerId),
   });
 
-  const { data: services = [], isLoading: servicesLoading } = useQuery({
-    queryKey: ['public-services'],
-    queryFn: bookingService.getServices,
+  const { data: services = [], isLoading: servicesLoading, isError: servicesError } = useQuery({
+    queryKey: ['public-services', providerId],
+    queryFn: () => bookingService.getServices(providerId),
   });
 
   const { data: slots = [], isFetching: slotsLoading } = useQuery({
@@ -198,6 +201,11 @@ export default function BookPage() {
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />
                 ))}
+              </div>
+            ) : servicesError ? (
+              <div className="text-center py-12 text-error-400">
+                <p className="font-medium">No se pudieron cargar los servicios</p>
+                <p className="text-xs mt-1 text-gray-400">Comprueba que el enlace es correcto</p>
               </div>
             ) : services.length === 0 ? (
               <div className="text-center py-12 text-gray-400">

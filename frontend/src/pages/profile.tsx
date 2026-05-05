@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   Camera, Mail, Phone, MapPin, Briefcase, Trash2, Plus,
-  Pencil, Clock, DollarSign, Users, Upload, X, Check, Building2,
+  Pencil, Clock, DollarSign, Users, Upload, X, Building2, Link2, Copy, CheckCheck,
 } from 'lucide-react';
 import { Header } from '@/components/common/Header';
 import { Sidebar } from '@/components/common/Sidebar';
@@ -25,7 +25,19 @@ export default function ProfilePage() {
   const [staffModal, setStaffModal] = useState<{ open: boolean; member?: Staff | null }>({ open: false });
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'service' | 'staff'; id: string } | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const bookingUrl = user
+    ? `${window.location.origin}/book?p=${user.id}`
+    : '';
+
+  const copyBookingLink = () => {
+    navigator.clipboard.writeText(bookingUrl).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
 
   if (!user) return null;
 
@@ -267,6 +279,44 @@ export default function ProfilePage() {
                       />
                     </div>
                   )}
+
+                  {/* Booking link (providers only) */}
+                  {isProvider && <div className="card">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-primary-500" />
+                      Tu enlace de reservas
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Comparte este enlace en tu web o redes sociales para que tus clientes puedan reservar.
+                    </p>
+                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 mb-3">
+                      <span className="text-xs text-gray-500 truncate flex-1 font-mono">{bookingUrl}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={copyBookingLink}
+                        className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-xl border transition-all ${
+                          linkCopied
+                            ? 'bg-success-50 border-success-200 text-success-700'
+                            : 'bg-white border-gray-200 text-gray-700 hover:border-primary-300 hover:text-primary-700'
+                        }`}
+                      >
+                        {linkCopied ? (
+                          <><CheckCheck className="w-3.5 h-3.5" /> Copiado</>
+                        ) : (
+                          <><Copy className="w-3.5 h-3.5" /> Copiar enlace</>
+                        )}
+                      </button>
+                      <a
+                        href={bookingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 text-xs font-medium py-2 px-3 rounded-xl border border-gray-200 text-gray-700 hover:border-primary-300 hover:text-primary-700 bg-white transition-all"
+                      >
+                        <Link2 className="w-3.5 h-3.5" /> Ver
+                      </a>
+                    </div>
+                  </div>}
                 </div>
 
                 {/* Right column */}

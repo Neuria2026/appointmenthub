@@ -10,21 +10,34 @@ const BUSINESS_HOURS = { start: 8, end: 20 };
 
 export const publicController = {
   /**
-   * GET /api/public/info
-   * Business name, logo, contact info — no auth
+   * Resolve provider: use ?p=id if given, else the first provider in the DB.
+   */
+  async _resolveProvider(providerId) {
+    if (providerId) {
+      const r = await query(
+        `SELECT id, full_name, email, phone, address, logo_url
+         FROM users WHERE id = $1 AND role = 'provider'`,
+        [providerId]
+      );
+      if (r.rows.length === 0) throw new AppError('Proveedor no encontrado', 404);
+      return r.rows[0];
+    }
+    const r = await query(
+      `SELECT id, full_name, email, phone, address, logo_url
+       FROM users WHERE role = 'provider' ORDER BY created_at ASC LIMIT 1`
+    );
+    return r.rows[0] || null;
+  },
+
+  /**
+   * GET /api/public/info?p=providerId
    */
   async getInfo(req, res, next) {
     try {
-      const result = await query(
-        `SELECT id, full_name, email, phone, address, logo_url
-         FROM users WHERE role = 'provider' ORDER BY created_at ASC LIMIT 1`
-      );
+      const provider = await publicController._resolveProvider(req.query.p);
       res.json({
         success: true,
-        data: {
-          ...(result.rows[0] || {}),
-          app_name: env.APP_NAME,
-        },
+        data: { ...(provider || {}), app_name: env.APP_NAME },
       });
     } catch (error) {
       next(error);
@@ -32,11 +45,13 @@ export const publicController = {
   },
 
   /**
-   * GET /api/public/services
-   * Active services with their assigned staff
+   * GET /api/public/services?p=providerId
    */
   async getServices(req, res, next) {
     try {
+      const provider = await publicController._resolveProvider(req.query.p);
+      if (!provider) return res.json({ success: true, data: [] });
+
       const result = await query(
         `SELECT s.*,
            COALESCE(
@@ -48,9 +63,10 @@ export const publicController = {
          FROM services s
          LEFT JOIN service_staff ss ON s.id = ss.service_id
          LEFT JOIN staff st ON ss.staff_id = st.id
-         WHERE s.is_active = true
+         WHERE s.is_active = true AND s.provider_id = $1
          GROUP BY s.id
-         ORDER BY s.name ASC`
+         ORDER BY s.name ASC`,
+        [provider.id]
       );
       res.json({ success: true, data: result.rows });
     } catch (error) {

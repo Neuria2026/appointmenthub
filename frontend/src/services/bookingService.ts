@@ -51,13 +51,15 @@ export interface BookingResult {
 }
 
 export const bookingService = {
-  async getInfo(): Promise<BusinessInfo> {
-    const res = await api.get<{ data: BusinessInfo }>('/info');
+  async getInfo(providerId?: string): Promise<BusinessInfo> {
+    const params = providerId ? { p: providerId } : {};
+    const res = await api.get<{ data: BusinessInfo }>('/info', { params });
     return res.data.data;
   },
 
-  async getServices(): Promise<PublicService[]> {
-    const res = await api.get<{ data: PublicService[] }>('/services');
+  async getServices(providerId?: string): Promise<PublicService[]> {
+    const params = providerId ? { p: providerId } : {};
+    const res = await api.get<{ data: PublicService[] }>('/services', { params });
     return res.data.data;
   },
 
