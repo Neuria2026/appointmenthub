@@ -205,7 +205,12 @@ export default function BookPage() {
             ) : servicesError ? (
               <div className="text-center py-12 text-error-400">
                 <p className="font-medium">No se pudieron cargar los servicios</p>
-                <p className="text-xs mt-1 text-gray-400">Comprueba que el enlace es correcto</p>
+                <p className="text-xs mt-1 text-gray-400">
+                  {(servicesError as any)?.response?.data?.message || (servicesError as any)?.message || 'Comprueba que el enlace es correcto'}
+                </p>
+                <p className="text-xs mt-1 text-gray-300">
+                  URL: {window.location.href}
+                </p>
               </div>
             ) : services.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
