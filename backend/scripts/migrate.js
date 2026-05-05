@@ -61,6 +61,20 @@ async function migrate() {
       console.log('ℹ️  Migration 003 already applied');
     }
 
+    // Migration 004 - assigned_provider_id on users (clients)
+    const col4 = await client.query(
+      `SELECT COUNT(*) FROM information_schema.columns
+       WHERE table_name = 'users' AND column_name = 'assigned_provider_id'`
+    );
+    if (parseInt(col4.rows[0].count) === 0) {
+      console.log('🔄 Running migration 004 (users.assigned_provider_id)...');
+      const sql = fs.readFileSync(path.join(migrationsDir, '004_client_assigned_provider.sql'), 'utf8');
+      await client.query(sql);
+      console.log('✅ Migration 004 completed');
+    } else {
+      console.log('ℹ️  Migration 004 already applied');
+    }
+
   } catch (err) {
     console.error('❌ Migration failed:', err.message);
     process.exit(1);

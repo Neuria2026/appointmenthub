@@ -199,34 +199,46 @@ export const publicController = {
         throw new AppError('Este horario ya no está disponible', 409, 'TimeConflict');
       }
 
-      // Find or create client
-      const existing = await query(
-        'SELECT * FROM users WHERE email = $1',
-        [client_email.toLowerCase().trim()]
-      );
-
+      // Find or create client (or use authenticated client)
       let clientUser;
-      if (existing.rows.length > 0) {
-        clientUser = existing.rows[0];
-        // Update phone/name if empty
-        if (!clientUser.phone && client_phone) {
-          await query('UPDATE users SET phone = $1 WHERE id = $2', [client_phone, clientUser.id]);
-          clientUser.phone = client_phone;
-        }
+      if (req.user && req.user.role === 'client') {
+        const r = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+        clientUser = r.rows[0];
       } else {
-        const clientId = uuidv4();
-        const passwordHash = await bcrypt.hash(uuidv4(), 10);
-        const newUser = await query(
-          `INSERT INTO users (id, email, password_hash, full_name, phone, role)
-           VALUES ($1, $2, $3, $4, $5, 'client') RETURNING *`,
-          [clientId, client_email.toLowerCase().trim(), passwordHash, client_name, client_phone || null]
+        const existing = await query(
+          'SELECT * FROM users WHERE email = $1',
+          [client_email.toLowerCase().trim()]
         );
-        clientUser = newUser.rows[0];
+        if (existing.rows.length > 0) {
+          clientUser = existing.rows[0];
+          if (!clientUser.phone && client_phone) {
+            await query('UPDATE users SET phone = $1 WHERE id = $2', [client_phone, clientUser.id]);
+            clientUser.phone = client_phone;
+          }
+        } else {
+          const clientId = uuidv4();
+          const passwordHash = await bcrypt.hash(uuidv4(), 10);
+          const newUser = await query(
+            `INSERT INTO users (id, email, password_hash, full_name, phone, role)
+             VALUES ($1, $2, $3, $4, $5, 'client') RETURNING *`,
+            [clientId, client_email.toLowerCase().trim(), passwordHash, client_name, client_phone || null]
+          );
+          clientUser = newUser.rows[0];
+          await query(
+            `INSERT INTO notification_preferences (id, user_id, channels, reminder_times)
+             VALUES ($1, $2, '["email"]', '[60, 1440]') ON CONFLICT DO NOTHING`,
+            [uuidv4(), clientId]
+          );
+        }
+      }
+
+      // Anchor client to this provider if not already anchored
+      if (!clientUser.assigned_provider_id) {
         await query(
-          `INSERT INTO notification_preferences (id, user_id, channels, reminder_times)
-           VALUES ($1, $2, '["email"]', '[60, 1440]') ON CONFLICT DO NOTHING`,
-          [uuidv4(), clientId]
+          'UPDATE users SET assigned_provider_id = $1 WHERE id = $2 AND role = $3',
+          [provider_id, clientUser.id, 'client']
         );
+        clientUser.assigned_provider_id = provider_id;
       }
 
       // Create appointment
@@ -267,6 +279,112 @@ export const publicController = {
           client_email: clientUser.email,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/public/my-provider
+   * Returns the provider the authenticated client is anchored to.
+   */
+  async getMyProvider(req, res, next) {
+    try {
+      const r = await query(
+        `SELECT u.id, u.full_name, u.email, u.phone, u.address, p.id as provider_id,
+                p.full_name as provider_name, p.email as provider_email,
+                p.phone as provider_phone, p.address as provider_address
+         FROM users u
+         LEFT JOIN users p ON u.assigned_provider_id = p.id AND p.role = 'provider'
+         WHERE u.id = $1`,
+        [req.user.id]
+      );
+      if (r.rows.length === 0) throw new AppError('Usuario no encontrado', 404);
+      const row = r.rows[0];
+      let logo_url = null;
+      if (row.provider_id) {
+        try {
+          const lr = await query('SELECT logo_url FROM users WHERE id = $1', [row.provider_id]);
+          logo_url = lr.rows[0]?.logo_url ?? null;
+        } catch { /* column may be missing */ }
+      }
+      res.json({
+        success: true,
+        data: {
+          client: {
+            id: row.id,
+            full_name: row.full_name,
+            email: row.email,
+            phone: row.phone,
+            address: row.address,
+          },
+          provider: row.provider_id ? {
+            id: row.provider_id,
+            full_name: row.provider_name,
+            email: row.provider_email,
+            phone: row.provider_phone,
+            address: row.provider_address,
+            logo_url,
+          } : null,
+          app_name: env.APP_NAME,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * GET /api/public/my-appointments
+   * Lists the authenticated client's appointments, newest first.
+   */
+  async getMyAppointments(req, res, next) {
+    try {
+      const r = await query(
+        `SELECT a.id, a.start_time, a.end_time, a.status, a.notes, a.created_at,
+                s.name as service_name, s.duration_minutes, s.price,
+                p.full_name as provider_name,
+                st.name as staff_name, st.specialty as staff_specialty
+         FROM appointments a
+         JOIN services s ON a.service_id = s.id
+         JOIN users p ON a.provider_id = p.id
+         LEFT JOIN staff st ON a.staff_id = st.id
+         WHERE a.client_id = $1
+         ORDER BY a.start_time DESC`,
+        [req.user.id]
+      );
+      res.json({
+        success: true,
+        data: r.rows.map((a) => ({
+          id: a.id,
+          start_time: a.start_time,
+          end_time: a.end_time,
+          status: a.status,
+          notes: a.notes,
+          service: { name: a.service_name, duration_minutes: a.duration_minutes, price: Number(a.price) },
+          provider: { full_name: a.provider_name },
+          staff: a.staff_name ? { name: a.staff_name, specialty: a.staff_specialty } : null,
+        })),
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * POST /api/public/set-password
+   * Lets a client set a real password on their account (after first booking).
+   */
+  async setPassword(req, res, next) {
+    try {
+      const { password } = req.body;
+      if (!password || password.length < 6) {
+        throw new AppError('La contraseña debe tener al menos 6 caracteres', 400, 'ValidationError');
+      }
+      const passwordHash = await bcrypt.hash(password, 10);
+      await query('UPDATE users SET password_hash = $1 WHERE id = $2 AND role = $3',
+        [passwordHash, req.user.id, 'client']);
+      res.json({ success: true, message: 'Contraseña actualizada' });
     } catch (error) {
       next(error);
     }
